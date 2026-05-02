@@ -7,6 +7,7 @@ set(tests
   children
   spans
   full-roots
+  iterator
 )
 
 foreach(test IN LISTS tests)

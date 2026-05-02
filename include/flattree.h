@@ -86,6 +86,69 @@ flat_tree_full_roots (uint64_t index, uint64_t *roots) {
   return len;
 }
 
+typedef struct {
+  uint64_t index;
+  uint64_t depth;
+  uint64_t offset;
+} flat_tree_iterator_t;
+
+static inline void
+flat_tree_iterator_seek (flat_tree_iterator_t *it, uint64_t index) {
+  it->index = index;
+  it->depth = flat_tree_depth(index);
+  it->offset = index >> (it->depth + 1);
+}
+
+static inline void
+flat_tree_iterator_init (flat_tree_iterator_t *it, uint64_t index) {
+  flat_tree_iterator_seek(it, index);
+}
+
+static inline int
+flat_tree_iterator_is_leaf (flat_tree_iterator_t *it) {
+  return it->depth == 0;
+}
+
+static inline void
+flat_tree_iterator_parent (flat_tree_iterator_t *it) {
+  uint64_t step = (uint64_t) 1 << it->depth;
+  it->index = it->offset & 1 ? it->index - step : it->index + step;
+  it->offset >>= 1;
+  it->depth++;
+}
+
+static inline void
+flat_tree_iterator_left_child (flat_tree_iterator_t *it) {
+  if (it->depth == 0) return;
+  it->depth--;
+  it->offset *= 2;
+  it->index -= (uint64_t) 1 << it->depth;
+}
+
+static inline void
+flat_tree_iterator_right_child (flat_tree_iterator_t *it) {
+  if (it->depth == 0) return;
+  it->depth--;
+  it->offset = it->offset * 2 + 1;
+  it->index += (uint64_t) 1 << it->depth;
+}
+
+static inline void
+flat_tree_iterator_sibling (flat_tree_iterator_t *it) {
+  it->index ^= (uint64_t) 2 << it->depth;
+  it->offset ^= 1;
+}
+
+static inline uint64_t
+flat_tree_iterator_left_span (flat_tree_iterator_t *it) {
+  return it->index & ~(((uint64_t) 2 << it->depth) - 1);
+}
+
+static inline uint64_t
+flat_tree_iterator_right_span (flat_tree_iterator_t *it) {
+  return (it->index | (((uint64_t) 2 << it->depth) - 1)) - 1;
+}
+
 #ifdef __cplusplus
 }
 #endif
