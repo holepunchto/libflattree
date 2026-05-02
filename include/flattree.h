@@ -139,14 +139,109 @@ flat_tree_iterator_sibling (flat_tree_iterator_t *it) {
   it->offset ^= 1;
 }
 
+static inline int
+flat_tree_iterator_is_left (flat_tree_iterator_t *it) {
+  return (it->offset & 1) == 0;
+}
+
+static inline int
+flat_tree_iterator_is_right (flat_tree_iterator_t *it) {
+  return (it->offset & 1) == 1;
+}
+
+static inline void
+flat_tree_iterator_next (flat_tree_iterator_t *it) {
+  it->offset++;
+  it->index += (uint64_t) 2 << it->depth;
+}
+
+static inline void
+flat_tree_iterator_prev (flat_tree_iterator_t *it) {
+  if (it->offset == 0) return;
+  it->offset--;
+  it->index -= (uint64_t) 2 << it->depth;
+}
+
+static inline void
+flat_tree_iterator_next_tree (flat_tree_iterator_t *it) {
+  it->index += ((uint64_t) 1 << it->depth) + 1;
+  it->offset = it->index >> 1;
+  it->depth = 0;
+}
+
+static inline void
+flat_tree_iterator_prev_tree (flat_tree_iterator_t *it) {
+  if (it->offset == 0) {
+    it->index = 0;
+    it->depth = 0;
+    return;
+  }
+  it->index -= ((uint64_t) 1 << it->depth) + 1;
+  it->offset = it->index >> 1;
+  it->depth = 0;
+}
+
+static inline int
+flat_tree_iterator_contains (flat_tree_iterator_t *it, uint64_t index) {
+  uint64_t half = (uint64_t) 1 << it->depth;
+  if (index > it->index) return index < it->index + half;
+  if (index < it->index) return it->index - index < half;
+  return 1;
+}
+
 static inline uint64_t
-flat_tree_iterator_left_span (flat_tree_iterator_t *it) {
+flat_tree_iterator_count (flat_tree_iterator_t *it) {
+  return ((uint64_t) 2 << it->depth) - 1;
+}
+
+static inline uint64_t
+flat_tree_iterator_count_leaves (flat_tree_iterator_t *it) {
+  return (uint64_t) 1 << it->depth;
+}
+
+static inline uint64_t
+flat_tree_iterator_peek_left_span (flat_tree_iterator_t *it) {
   return it->index & ~(((uint64_t) 2 << it->depth) - 1);
 }
 
 static inline uint64_t
-flat_tree_iterator_right_span (flat_tree_iterator_t *it) {
+flat_tree_iterator_peek_right_span (flat_tree_iterator_t *it) {
   return (it->index | (((uint64_t) 2 << it->depth) - 1)) - 1;
+}
+
+static inline void
+flat_tree_iterator_left_span (flat_tree_iterator_t *it) {
+  it->index = it->index - ((uint64_t) 1 << it->depth) + 1;
+  it->offset = it->index >> 1;
+  it->depth = 0;
+}
+
+static inline void
+flat_tree_iterator_right_span (flat_tree_iterator_t *it) {
+  it->index = it->index + ((uint64_t) 1 << it->depth) - 1;
+  it->offset = it->index >> 1;
+  it->depth = 0;
+}
+
+static inline int
+flat_tree_iterator_full_root (flat_tree_iterator_t *it, uint64_t index) {
+  if (index <= it->index || it->depth > 0) return 0;
+  while (index > it->index + ((uint64_t) 2 << it->depth) + ((uint64_t) 1 << it->depth)) {
+    it->index += (uint64_t) 1 << it->depth;
+    it->depth++;
+    it->offset >>= 1;
+  }
+  return 1;
+}
+
+static inline int
+flat_tree_iterator_is_root (flat_tree_iterator_t *it, uint64_t length) {
+  uint64_t half = (uint64_t) 1 << it->depth;
+  uint64_t current_length = 1 + (it->index + half - 1) / 2;
+  if (length < current_length) return 0;
+  uint64_t parent = it->offset & 1 ? it->index - half : it->index + half;
+  uint64_t parent_length = 1 + (parent + half * 2 - 1) / 2;
+  return parent_length > length;
 }
 
 #ifdef __cplusplus
