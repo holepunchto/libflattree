@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
 
 static inline uint64_t
@@ -104,7 +105,7 @@ flat_tree_iterator_init (flat_tree_iterator_t *it, uint64_t index) {
   flat_tree_iterator_seek(it, index);
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_is_leaf (flat_tree_iterator_t *it) {
   return it->depth == 0;
 }
@@ -139,12 +140,12 @@ flat_tree_iterator_sibling (flat_tree_iterator_t *it) {
   it->offset ^= 1;
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_is_left (flat_tree_iterator_t *it) {
   return (it->offset & 1) == 0;
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_is_right (flat_tree_iterator_t *it) {
   return (it->offset & 1) == 1;
 }
@@ -181,7 +182,7 @@ flat_tree_iterator_prev_tree (flat_tree_iterator_t *it) {
   it->depth = 0;
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_contains (flat_tree_iterator_t *it, uint64_t index) {
   uint64_t half = (uint64_t) 1 << it->depth;
   if (index > it->index) return index < it->index + half;
@@ -223,7 +224,7 @@ flat_tree_iterator_right_span (flat_tree_iterator_t *it) {
   it->depth = 0;
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_full_root (flat_tree_iterator_t *it, uint64_t index) {
   if (index <= it->index || it->depth > 0) return 0;
   while (index > it->index + ((uint64_t) 2 << it->depth) + ((uint64_t) 1 << it->depth)) {
@@ -234,7 +235,7 @@ flat_tree_iterator_full_root (flat_tree_iterator_t *it, uint64_t index) {
   return 1;
 }
 
-static inline int
+static inline bool
 flat_tree_iterator_is_root (flat_tree_iterator_t *it, uint64_t length) {
   uint64_t half = (uint64_t) 1 << it->depth;
   uint64_t current_length = 1 + (it->index + half - 1) / 2;
