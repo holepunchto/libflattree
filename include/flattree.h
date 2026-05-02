@@ -105,6 +105,21 @@ flat_tree_iterator_init (flat_tree_iterator_t *it, uint64_t index) {
   flat_tree_iterator_seek(it, index);
 }
 
+static inline uint64_t
+flat_tree_iterator_index (flat_tree_iterator_t *it) {
+  return it->index;
+}
+
+static inline uint64_t
+flat_tree_iterator_depth (flat_tree_iterator_t *it) {
+  return it->depth;
+}
+
+static inline uint64_t
+flat_tree_iterator_offset (flat_tree_iterator_t *it) {
+  return it->offset;
+}
+
 static inline bool
 flat_tree_iterator_is_leaf (flat_tree_iterator_t *it) {
   return it->depth == 0;
